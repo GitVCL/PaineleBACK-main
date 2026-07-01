@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String          @id @default(uuid())
+  nome                String
+  email               String          @unique
+  senha               String
+  criadoEm            DateTime        @default(now())
+  
+  // Campos de assinatura mantidos mas simplificados para "Eterna/Gratuita"
+  assinatura          String          @default("eterna")
+  planoExpiraEm       DateTime?       // Será sempre null
+  assinaturaPaga      Boolean         @default(true)
+  statusPagamento     String          @default("PAGO")
+  
+  resetToken          String?
+  resetTokenExpiry    DateTime?
+  // Verificação de email
+  emailVerificado     Boolean         @default(false)
+  verificationToken   String?
+  verificationTokenExpiry DateTime?
+  verificationCode    String?
+  telefone            String?
+  tipo                String          @default("PRINCIPAL")
+  
+  dataInicioTeste     DateTime        @default(now())
+  diasTestRestantes   Int             @default(0)
+  empresa             String?
+  principalId         String?
+  proximoVencimento   DateTime?
+  valorMensalidade    Float           @default(0)
+  valorTotal          Float           @default(0)
+  
+  despesas            Despesa[]       @relation("DespesasDoUsuario")
+  funcionariosEmpresa Funcionario[]   @relation("FuncionariosDoUsuario")
+  produtos            Produto[]       @relation("ProdutosDoUsuario")
+  principal           User?           @relation("PrincipalFuncionarios", fields: [principalId], references: [id])
+  funcionarios        User[]          @relation("PrincipalFuncionarios")
+  vendas              Venda[]         @relation("VendasDoUsuario")
+  movimentacoesConsole MovimentacaoConsole[] @relation("MovimentacoesDoUsuario")
+}
+
+model Produto {
+  id            String         @id @default(uuid())
+  nome          String
+  valor         Float
+  quantidade    Int
+  estoque       Int
+  vendidos      Int            @default(0)
+  categoria     String
+  usuarioId     String
+  valorDaCompra Float?         @default(0)
+  lucroTotal    Float?         @default(0)
+  codigoBarras  String?
+  codigosBarras CodigoBarras[]
+  itensVenda    ItemVenda[]
+  usuario       User           @relation("ProdutosDoUsuario", fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([codigoBarras, usuarioId], name: "unique_codigo_por_usuario")
+}
+
+model CodigoBarras {
+  id             String    @id @default(uuid())
+  codigo         String
+  produtoId      String
+  usuarioId      String
+  dataVencimento DateTime?
+  criadoEm       DateTime  @default(now())
+  produto        Produto   @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+
+  @@unique([codigo, usuarioId], name: "unique_codigo_barras_por_usuario")
+}
+
+model Venda {
+  id            String       @id @default(uuid())
+  tipo          String
+  usuarioId     String
+  identificador String?
+  createdAt     DateTime     @default(now())
+  finalizada    Boolean      @default(false)
+  funcionarioId String?
+  itensVenda    ItemVenda[]
+  funcionario   Funcionario? @relation(fields: [funcionarioId], references: [id])
+  usuario       User         @relation("VendasDoUsuario", fields: [usuarioId], references: [id], onDelete: Cascade)
+}
+
+model ItemVenda {
+  id         String  @id @default(uuid())
+  nome       String
+  preco      Float
+  quantidade Int
+  vendaId    String
+  produtoId  String
+  produto    Produto @relation(fields: [produtoId], references: [id])
+  venda      Venda   @relation(fields: [vendaId], references: [id], onDelete: Cascade)
+}
+
+model Despesa {
+  id           String   @id @default(uuid())
+  descricao    String
+  valor        Float
+  categoria    String
+  data         DateTime @default(now())
+  usuarioId    String
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+  usuario      User     @relation("DespesasDoUsuario", fields: [usuarioId], references: [id], onDelete: Cascade)
+}
+
+model Funcionario {
+  id           String                   @id @default(uuid())
+  nome         String
+  email        String?                  @unique
+  ativo        Boolean                  @default(true)
+  criadoEm     DateTime                 @default(now())
+  usuarioId    String
+  atualizadoEm DateTime                 @updatedAt
+  senha        String
+  permissoes   String[]                 @default(["vendas"])
+  usuario      User                     @relation("FuncionariosDoUsuario", fields: [usuarioId], references: [id], onDelete: Cascade)
+  notificacoes NotificacaoFuncionario[]
+  vendas       Venda[]
+}
+
+model NotificacaoFuncionario {
+  id            String      @id @default(uuid())
+  titulo        String
+  mensagem      String
+  tipo          String      @default("INFO")
+  lida          Boolean     @default(false)
+  funcionarioId String
+  criadoEm      DateTime    @default(now())
+  funcionario   Funcionario @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+}
+
+
+
+enum VendaTipo {
+  VENDAS
+  COMANDAS
+  FUTUROS
+}
+
+// Movimentação do Console do Proprietário (Auditoria)
+model MovimentacaoConsole {
+  id         String   @id @default(uuid())
+  usuarioId  String
+  actorTipo   String   // PRINCIPAL | FUNCIONARIO
+  actorUsuarioId    String?
+  actorFuncionarioId String?
+  actorAdminId       String? // Deprecated but kept for structure if needed, or remove? I will keep as nullable
+  actorColaboradorId String? // Deprecated
+
+  acao       String   // e.g., CRIAR_VENDA, ENCERRAR_VENDA, CRIAR_PRODUTO
+  categoria  String?  // e.g., VENDAS, PRODUTOS, FUNCIONARIOS
+  entidade   String?
+  entidadeId String?
+  descricao  String?
+  metadata   Json?
+  ip         String?
+  userAgent  String?
+  criadoEm   DateTime @default(now())
+
+  usuario    User     @relation("MovimentacoesDoUsuario", fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, criadoEm])
+  @@map("movimentacoes_console")
+}

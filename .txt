@@ -1,0 +1,20 @@
+# Banco PostgreSQL da Railway (mantém o mesmo)
+DATABASE_URL=""
+JWT_SECRET=""
+JWT_REFRESH_SECRET=""
+FRONTEND_URL=""
+PORT=3001
+NODE_ENV=development
+
+# Email Configuration
+EMAIL_HOST=
+EMAIL_PORT=
+EMAIL_USER=
+EMAIL_PASS=
+EMAIL_FROM=
+
+# Stripe Configuration
+STRIPE_SECRET_KEY=
+STRIPE_PUBLISHABLE_KEY=
+STRIPE_WEBHOOK_SECRET=whsec_PtPaJcV0W7aLBiy8sXsKw8TpDWQDoRj4
+
