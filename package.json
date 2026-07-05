@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js",
+    "start": "prisma migrate deploy --schema=src/prisma/schema.prisma && node server.js",
     "prisma": "prisma",
     "migrate": "npx prisma migrate dev --schema=src/prisma/schema.prisma",
     "verificar-assinaturas": "node src/scripts/executar-verificacao.js"
@@ -28,13 +28,13 @@
     "node-cron": "^4.2.1",
     "node-fetch": "^3.3.2",
     "nodemailer": "^7.0.5",
+    "prisma": "^6.13.0",
     "resend": "^6.7.0",
     "sonner": "^2.0.7",
     "stripe": "^18.5.0",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0",
-    "prisma": "^6.13.0"
+    "nodemon": "^3.1.0"
   }
 }
