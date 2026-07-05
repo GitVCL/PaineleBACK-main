@@ -1,6 +1,6 @@
 import cors from "cors";
 
-const allowedOrigins = [
+const staticAllowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:5175",
@@ -16,12 +16,39 @@ const allowedOrigins = [
   "https://www.nuvuria.shop"
 ];
 
+function sanitizeOrigin(origin) {
+  return String(origin)
+    .trim()
+    .replace(/^['"`\s]+|['"`\s]+$/g, '')
+    .replace(/\/+$/, '');
+}
+
+function getEnvOrigins() {
+  const rawOrigins = process.env.FRONTEND_URL || '';
+
+  if (!rawOrigins) {
+    return [];
+  }
+
+  return rawOrigins
+    .split(',')
+    .map((origin) => sanitizeOrigin(origin))
+    .filter(Boolean);
+}
+
+const allowedOrigins = new Set([
+  ...staticAllowedOrigins.map((origin) => sanitizeOrigin(origin)),
+  ...getEnvOrigins()
+]);
+
 export const corsOptions = {
   origin: function (origin, callback) {
     // Permite chamadas do mesmo domínio (ex: server para server sem "origin")
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.includes(origin)) {
+    const sanitizedOrigin = sanitizeOrigin(origin);
+
+    if (allowedOrigins.has(sanitizedOrigin)) {
       return callback(null, true);
     } else {
       return callback(new Error("❌ Origem não permitida pelo CORS"));
