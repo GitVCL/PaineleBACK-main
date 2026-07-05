@@ -3,3 +3,5 @@ node_modules/
 
 # Ignorar variáveis de ambiente
 .env
+.env.*
+!.env.example

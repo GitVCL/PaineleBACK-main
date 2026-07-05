@@ -7,57 +7,56 @@ import emailService from './email.service.js';
 
 const authService = {
   register: async ({ nome, email, senha, tipo = 'PRINCIPAL' }) => {
-    const existe = await prisma.user.findUnique({ where: { email } });
-    if (existe) return { status: 400, message: 'E-mail já cadastrado' };
-
-    const senhaHash = await bcrypt.hash(senha, 10);
-    
-    const userData = {
-      nome,
-      email,
-      senha: senhaHash,
-      tipo,
-      emailVerificado: true, // Auto-verificado (Painelé B2B Gratuito)
-      verificationToken: null,
-      verificationCode: null,
-      verificationTokenExpiry: null
-    };
-
-    // Configurar plano GRATUITO ETERNO para TODOS
-    userData.assinatura = 'eterna';
-    userData.planoExpiraEm = null; // Sem expiração
-    userData.statusPagamento = 'PAGO';
-    userData.assinaturaPaga = true;
-
-    let user;
     try {
-      user = await prisma.user.create({ data: userData });
+      const existe = await prisma.user.findUnique({ where: { email } });
+      if (existe) return { status: 400, message: 'E-mail já cadastrado' };
+
+      const senhaHash = await bcrypt.hash(senha, 10);
+      
+      const userData = {
+        nome,
+        email,
+        senha: senhaHash,
+        tipo,
+        emailVerificado: true, // Auto-verificado (Painelé B2B Gratuito)
+        verificationToken: null,
+        verificationCode: null,
+        verificationTokenExpiry: null
+      };
+
+      // Configurar plano GRATUITO ETERNO para TODOS
+      userData.assinatura = 'eterna';
+      userData.planoExpiraEm = null; // Sem expiração
+      userData.statusPagamento = 'PAGO';
+      userData.assinaturaPaga = true;
+
+      const user = await prisma.user.create({ data: userData });
+
+      // Email de boas-vindas opcional (sem código de verificação)
+      // Se falhar, não afeta o fluxo
+      emailService.enviarEmailBoasVindas(user.email, user.nome)
+        .catch(error => {
+          console.error('⚠️ Erro ao enviar email de boas-vindas (segundo plano):', error.message);
+        });
+
+      const token = gerarToken(user);
+      
+      return { 
+        status: 201, 
+        message: 'Cadastro realizado com sucesso!', 
+        token,
+        user: { 
+          id: user.id,
+          nome: user.nome,
+          email: user.email,
+          tipo: user.tipo,
+          emailVerificado: true
+        } 
+      };
     } catch (error) {
-      console.error('❌ Erro ao criar usuário no banco:', error);
-      return { status: 500, message: 'Erro interno ao criar cadastro. Tente novamente.' };
+      console.error('🚨 Erro no Prisma/Database durante registro:', error.message);
+      return { status: 500, message: 'Erro de conexão com banco de dados. Tente novamente.' };
     }
-
-    // Email de boas-vindas opcional (sem código de verificação)
-    // Se falhar, não afeta o fluxo
-    emailService.enviarEmailBoasVindas(user.email, user.nome)
-      .catch(error => {
-        console.error('⚠️ Erro ao enviar email de boas-vindas (segundo plano):', error.message);
-      });
-
-    const token = gerarToken(user);
-    
-    return { 
-      status: 201, 
-      message: 'Cadastro realizado com sucesso!', 
-      token,
-      user: { 
-        id: user.id,
-        nome: user.nome,
-        email: user.email,
-        tipo: user.tipo,
-        emailVerificado: true
-      } 
-    };
   },
 
   login: async ({ email, senha }) => {

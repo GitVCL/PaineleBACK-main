@@ -1,8 +1,8 @@
+import 'dotenv/config';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
 import { corsOptions } from './src/config/cors.js';
 
 // Configurar timezone para Recife/PE (UTC-3)
@@ -23,13 +23,7 @@ import funcionariosRoutes from './src/routes/funcionarios.routes.js';
 import usuariosRoutes from './src/routes/usuarios.routes.js';
 import codigoBarrasRoutes from './src/routes/codigoBarras.routes.js';
 import notificacoesFuncionarioRoutes from './src/routes/notificacoesFuncionario.routes.js';
-import debugRoutes from './src/routes/debug.routes.js';
 import consoleRoutes from './src/routes/console.routes.js';
-
-
-
-dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -95,7 +89,6 @@ app.use('/api/funcionarios', funcionariosRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/codigos-barras', codigoBarrasRoutes);
 app.use('/api/notificacoes-funcionario', notificacoesFuncionarioRoutes);
-app.use('/api/debug', debugRoutes);
 app.use('/api/console', consoleRoutes);
 
 
