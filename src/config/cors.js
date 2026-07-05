@@ -5,7 +5,6 @@ const staticAllowedOrigins = [
   "http://localhost:5174",
   "http://localhost:5175",
   "http://localhost:3000",
-  "https://1293801u8dj1k2oksd091213-production.up.railway.app", // <- URL do Railway
   "https://painele.shop",
   "https://www.painele.shop",
   "https://nuvuria.com",
