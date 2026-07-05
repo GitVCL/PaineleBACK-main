@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "prisma migrate deploy --schema=src/prisma/schema.prisma && node server.js",
+    "start": "prisma db push --accept-data-loss --schema=src/prisma/schema.prisma && node server.js",
     "prisma": "prisma",
     "migrate": "npx prisma migrate dev --schema=src/prisma/schema.prisma",
     "verificar-assinaturas": "node src/scripts/executar-verificacao.js"
